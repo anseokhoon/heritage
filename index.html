@@ -3,15 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>상속세 1분 컷 시뮬레이터</title>
+    <title>상속세 1분 진단 | KB스타웰스매니저</title>
     <!-- Tailwind CSS 로드 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Noto Sans KR -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --navy-900: #0B2545;
+            --navy-800: #13315C;
+            --gold-600: #C9A227;
+            --gold-500: #D4AF37;
+            --ivory-100: #F7F5F0;
+        }
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f3f4f6; /* Tailwind gray-100 */
+            background-color: var(--ivory-100);
             -webkit-tap-highlight-color: transparent;
         }
         
@@ -26,28 +33,33 @@
             height: 24px;
             width: 24px;
             border-radius: 50%;
-            background: #3b82f6; /* blue-500 */
+            background: var(--navy-900);
+            border: 3px solid var(--gold-500);
             cursor: pointer;
             margin-top: -8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.25);
         }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
             height: 8px;
             cursor: pointer;
-            background: #d1d5db; /* gray-300 */
+            background: #ddd6c8;
             border-radius: 4px;
         }
         input[type=range]:focus {
             outline: none;
         }
+
+        .split-track::-webkit-slider-runnable-track {
+            background: linear-gradient(to right, var(--navy-800) 0%, var(--navy-800) 60%, var(--gold-500) 60%, var(--gold-500) 100%);
+        }
         
         .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.97);
             backdrop-filter: blur(10px);
-            border-top-left-radius: 2rem;
-            border-top-right-radius: 2rem;
-            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-top-left-radius: 1.5rem;
+            border-top-right-radius: 1.5rem;
+            box-shadow: 0 -4px 12px -2px rgba(11, 37, 69, 0.08);
         }
 
         .fade-in {
@@ -60,25 +72,34 @@
         }
     </style>
 </head>
-<body class="text-gray-800 flex flex-col h-screen overflow-hidden">
+<body class="text-gray-800">
 
     <!-- 헤더 -->
-    <header class="bg-blue-600 text-white p-6 shadow-md z-10 shrink-0">
-        <h1 class="text-2xl font-black tracking-tight">💸 상속세 1분 컷</h1>
-        <p class="text-blue-100 text-sm mt-1">내 자산, 세금은 얼마나 나올까?</p>
+    <header class="text-white p-6 shadow-md" style="background: linear-gradient(135deg, var(--navy-900), var(--navy-800));">
+        <div class="flex items-start justify-between gap-3">
+            <div>
+                <p class="text-[11px] tracking-widest font-bold mb-1" style="color: var(--gold-500);">KB WEALTH INSIGHT</p>
+                <h1 class="text-2xl font-black tracking-tight leading-snug">내 자산, 상속세로<br>얼마나 사라질까요?</h1>
+                <p class="text-blue-100/80 text-sm mt-2">평생 일군 자산, 미리 알아야 지킬 수 있습니다</p>
+            </div>
+            <div class="shrink-0 text-right border rounded-xl px-3 py-2" style="border-color: var(--gold-500);">
+                <p class="text-[13px] font-black leading-tight" style="color: var(--gold-500);">★ KB스타<br>웰스매니저</p>
+                <p class="text-[10px] text-blue-100/70 mt-1 leading-tight">17년 연속<br>MDRT</p>
+            </div>
+        </div>
     </header>
 
-    <!-- 메인 콘텐츠 (스크롤 가능 영역) -->
-    <main class="flex-1 overflow-y-auto p-5 pb-32">
+    <!-- 메인 콘텐츠 -->
+    <main class="p-5">
         
         <!-- 입력 폼 카드 -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
             
             <!-- 자산 입력 -->
-            <div class="mb-8">
+            <div class="mb-6">
                 <div class="flex justify-between items-end mb-2">
                     <label class="block text-gray-700 font-bold text-lg">총 자산 규모</label>
-                    <div class="text-2xl font-black text-blue-600">
+                    <div class="text-2xl font-black" style="color: var(--navy-900);">
                         <span id="assetValueDisplay">20</span><span class="text-base text-gray-500 font-medium ml-1">억원</span>
                     </div>
                 </div>
@@ -87,6 +108,25 @@
                     <span>10억</span>
                     <span>100억</span>
                     <span>200억</span>
+                </div>
+            </div>
+
+            <!-- 자산 구성: 부동산 / 유동자산 -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="block text-gray-700 font-bold text-lg">자산 구성</label>
+                    <span class="text-[11px] text-gray-400">부동산 · 유동자산 비중</span>
+                </div>
+                <input type="range" id="realEstateRatioSlider" min="0" max="100" step="5" value="60" class="w-full split-track">
+                <div class="flex justify-between mt-3">
+                    <div>
+                        <p class="text-[11px] text-gray-400">🏠 부동산</p>
+                        <p class="font-bold" style="color: var(--navy-900);"><span id="realEstateAmountDisplay">12.0</span>억 <span class="text-xs text-gray-400 font-normal">(<span id="realEstateRatioDisplay">60</span>%)</span></p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[11px] text-gray-400">💰 유동자산</p>
+                        <p class="font-bold" style="color: var(--gold-600);"><span id="liquidAmountDisplay">8.0</span>억 <span class="text-xs text-gray-400 font-normal">(<span id="liquidRatioDisplay">40</span>%)</span></p>
+                    </div>
                 </div>
             </div>
 
@@ -101,7 +141,7 @@
                     <span class="font-medium">배우자 여부</span>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="spouseToggle" class="sr-only peer" checked>
-                        <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-500"></div>
+                        <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all" style="--tw-bg-opacity:1;" id="spouseSwitchTrack"></div>
                         <span class="ml-3 text-sm font-bold text-gray-700 w-8" id="spouseLabel">있음</span>
                     </label>
                 </div>
@@ -118,24 +158,22 @@
             </div>
             
             <div class="mt-4 text-[11px] text-gray-400 text-right">
-                * 금융자산 20% 포함, 법정지분 상속 가정
+                * 법정지분 상속 가정
             </div>
         </div>
-    </main>
 
-    <!-- 하단 결과 고정 패널 -->
-    <div class="absolute bottom-0 w-full glass-panel pt-4 pb-6 px-6 z-20">
-        <div id="resultArea" class="hidden mb-4 fade-in">
+        <!-- 계산 결과 -->
+        <div id="resultArea" class="hidden mb-4 fade-in bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div class="flex justify-between items-center mb-1">
                 <span class="text-sm text-gray-500 font-medium">예상 상속세 (납부할 세액)</span>
                 <span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">실효세율 <span id="taxRateDisplay">0.0</span>%</span>
             </div>
-            <div class="text-3xl font-black text-gray-900 tracking-tight">
+            <div class="text-3xl font-black tracking-tight" style="color: var(--navy-900);">
                 <span id="finalTaxDisplay">0</span><span class="text-lg text-gray-600 ml-1 font-medium">원</span>
             </div>
             
-            <!-- 상세 내역 토글 버튼 (선택적 구현) -->
-             <button id="detailBtn" class="mt-3 w-full py-2 text-sm text-blue-600 font-medium bg-blue-50 rounded-lg active:bg-blue-100 transition">
+            <!-- 상세 내역 토글 버튼 -->
+             <button id="detailBtn" class="mt-3 w-full py-2 text-sm font-medium bg-gray-50 rounded-lg active:bg-gray-100 transition" style="color: var(--navy-800);">
                 계산 내역 상세보기 ▾
             </button>
             
@@ -158,21 +196,32 @@
             </p>
         </div>
 
-        <button id="calculateBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all text-lg">
-            지금 계산하기
-        </button>
-    </div>
+        <!-- 계산 버튼 -->
+        <div class="glass-panel sticky bottom-0 pt-4 pb-6 px-1">
+            <p id="ctaHint" class="text-center text-xs text-gray-400 mb-2">우리 가족을 위한 첫걸음, 1분이면 충분합니다</p>
+            <button id="calculateBtn" class="w-full text-white font-bold py-4 rounded-xl shadow-lg transition-all text-lg" style="background: linear-gradient(135deg, var(--navy-900), var(--navy-800)); box-shadow: 0 8px 20px -6px rgba(11,37,69,0.5);">
+                지금 계산하기
+            </button>
+        </div>
+    </main>
 
     <script>
         // DOM 요소 가져오기
         const assetSlider = document.getElementById('assetSlider');
         const assetValueDisplay = document.getElementById('assetValueDisplay');
+        const realEstateRatioSlider = document.getElementById('realEstateRatioSlider');
+        const realEstateAmountDisplay = document.getElementById('realEstateAmountDisplay');
+        const realEstateRatioDisplay = document.getElementById('realEstateRatioDisplay');
+        const liquidAmountDisplay = document.getElementById('liquidAmountDisplay');
+        const liquidRatioDisplay = document.getElementById('liquidRatioDisplay');
         const spouseToggle = document.getElementById('spouseToggle');
         const spouseLabel = document.getElementById('spouseLabel');
+        const spouseSwitchTrack = document.getElementById('spouseSwitchTrack');
         const childMinusBtn = document.getElementById('childMinusBtn');
         const childPlusBtn = document.getElementById('childPlusBtn');
         const childCountDisplay = document.getElementById('childCountDisplay');
         const calculateBtn = document.getElementById('calculateBtn');
+        const ctaHint = document.getElementById('ctaHint');
         const resultArea = document.getElementById('resultArea');
         const finalTaxDisplay = document.getElementById('finalTaxDisplay');
         const taxRateDisplay = document.getElementById('taxRateDisplay');
@@ -181,20 +230,45 @@
 
         // 상태 변수
         let currentAssetEok = 20; // 억원
+        let realEstateRatio = 60; // %
         let hasSpouse = true;
         let childCount = 2;
+
+        function updateAssetSplitDisplay() {
+            const liquidRatio = 100 - realEstateRatio;
+            const realEstateAmount = (currentAssetEok * realEstateRatio / 100).toFixed(1);
+            const liquidAmount = (currentAssetEok * liquidRatio / 100).toFixed(1);
+            realEstateAmountDisplay.textContent = realEstateAmount;
+            liquidAmountDisplay.textContent = liquidAmount;
+            realEstateRatioDisplay.textContent = realEstateRatio;
+            liquidRatioDisplay.textContent = liquidRatio;
+        }
 
         // UI 업데이트 함수들
         assetSlider.addEventListener('input', (e) => {
             currentAssetEok = parseInt(e.target.value);
             assetValueDisplay.textContent = currentAssetEok;
+            updateAssetSplitDisplay();
             resetResult();
         });
+
+        realEstateRatioSlider.addEventListener('input', (e) => {
+            realEstateRatio = parseInt(e.target.value);
+            updateAssetSplitDisplay();
+            updateSliderTrackGradient();
+            resetResult();
+        });
+
+        function updateSliderTrackGradient() {
+            const pct = realEstateRatio;
+            realEstateRatioSlider.style.background = `linear-gradient(to right, var(--navy-800) 0%, var(--navy-800) ${pct}%, var(--gold-500) ${pct}%, var(--gold-500) 100%)`;
+        }
 
         spouseToggle.addEventListener('change', (e) => {
             hasSpouse = e.target.checked;
             spouseLabel.textContent = hasSpouse ? '있음' : '없음';
             spouseLabel.className = `ml-3 text-sm font-bold w-8 ${hasSpouse ? 'text-gray-700' : 'text-gray-400'}`;
+            spouseSwitchTrack.style.backgroundColor = hasSpouse ? 'var(--navy-800)' : '';
             resetResult();
         });
 
@@ -221,6 +295,8 @@
 
         function resetResult() {
             resultArea.classList.add('hidden');
+            ctaHint.textContent = '우리 가족을 위한 첫걸음, 1분이면 충분합니다';
+            calculateBtn.textContent = '지금 계산하기';
             calculateBtn.classList.remove('hidden');
             detailArea.classList.add('hidden');
             detailBtn.textContent = '계산 내역 상세보기 ▾';
@@ -234,8 +310,6 @@
 
         // 계산 메인 로직
         calculateBtn.addEventListener('click', () => {
-            // 제공된 이미지 및 가정을 기반으로 한 계산 로직
-            
             // 1. 총 상속재산가액
             const totalAsset = currentAssetEok * 100000000;
             
@@ -254,26 +328,18 @@
                 basicDeduction = 200000000; // 기초공제만 적용
             }
 
-            // 4. 배우자 상속공제
-            // 가정: 배우자 법정지분만큼 상속. (최소 5억 ~ 최대 30억)
+            // 4. 배우자 상속공제 (법정지분, 최소 5억 ~ 최대 30억)
             let spouseDeduction = 0;
             if (hasSpouse) {
-                // 법정 상속 지분 비율 계산: 배우자 1.5, 자녀 1명당 1.0
                 const spouseRatio = 1.5;
                 const totalRatio = spouseRatio + (childCount * 1.0);
-                
-                // 법정 상속 금액 = (과세가액 - 상속인이 아닌수유자가받은재산(0가정)) * (배우자지분/총지분)
-                // 단순화를 위해 총 자산 기준으로 계산 (이미지와 유사한 결과 도출을 위해)
                 const legalInheritance = Math.floor(totalAsset * (spouseRatio / totalRatio));
-                
-                // 배우자 공제 한도: 30억원
                 spouseDeduction = Math.min(Math.max(legalInheritance, 500000000), 3000000000);
             }
 
-            // 5. 금융재산 상속공제
-            // 가정: 자산의 20%가 금융자산.
-            // 2천이하: 전액, 2천~1억: 2천, 1억~10억: 20%, 10억초과: 2억 한도
-            const financeAsset = totalAsset * 0.2;
+            // 5. 금융재산 상속공제 (사용자가 입력한 유동자산 비중 적용)
+            const liquidRatio = 100 - realEstateRatio;
+            const financeAsset = totalAsset * (liquidRatio / 100);
             let financeDeduction = 0;
             if (financeAsset <= 20000000) {
                 financeDeduction = financeAsset;
@@ -291,19 +357,19 @@
             let taxRate = 0;
             let progressiveDeduction = 0;
             
-            if (taxBase <= 100000000) { // 1억 이하
+            if (taxBase <= 100000000) {
                 taxRate = 0.1;
                 progressiveDeduction = 0;
-            } else if (taxBase <= 500000000) { // 5억 이하
+            } else if (taxBase <= 500000000) {
                 taxRate = 0.2;
                 progressiveDeduction = 10000000;
-            } else if (taxBase <= 1000000000) { // 10억 이하
+            } else if (taxBase <= 1000000000) {
                 taxRate = 0.3;
                 progressiveDeduction = 60000000;
-            } else if (taxBase <= 3000000000) { // 30억 이하
+            } else if (taxBase <= 3000000000) {
                 taxRate = 0.4;
                 progressiveDeduction = 160000000;
-            } else { // 30억 초과
+            } else {
                 taxRate = 0.5;
                 progressiveDeduction = 460000000;
             }
@@ -312,20 +378,19 @@
             let calculatedTax = Math.floor(taxBase * taxRate) - progressiveDeduction;
             if (calculatedTax < 0) calculatedTax = 0;
 
-            // 9. 신고세액공제 (가정: 기한 내 자진신고 3%)
+            // 9. 신고세액공제 (3%)
             const reportDiscount = Math.floor(calculatedTax * 0.03);
 
             // 10. 최종 납부할 세액
             const finalTax = calculatedTax - reportDiscount;
             
-            // 11. 실효세율 (실질 담세율)
+            // 11. 실효세율
             const effectiveRate = totalAsset > 0 ? ((finalTax / totalAsset) * 100).toFixed(1) : "0.0";
 
             // UI 업데이트
             finalTaxDisplay.textContent = formatWon(finalTax);
             taxRateDisplay.textContent = effectiveRate;
             
-            // 상세내역 업데이트
             document.getElementById('dt_total').textContent = formatWon(totalAsset) + '원';
             document.getElementById('dt_basic_label').textContent = isSpouseSoleHeir ? '기초공제' : '일괄공제(기본)';
             document.getElementById('dt_basic').textContent = '-' + formatWon(basicDeduction) + '원';
@@ -335,21 +400,27 @@
             document.getElementById('dt_rate').textContent = (taxRate * 100) + '%';
             document.getElementById('dt_discount').textContent = '-' + formatWon(reportDiscount) + '원';
 
-            // 애니메이션과 함께 결과 표시
-            calculateBtn.classList.add('hidden');
             resultArea.classList.remove('hidden');
+            ctaHint.textContent = '정확한 절세 설계는 KB스타웰스매니저와 상담하세요';
             
-            // 다시 계산하기 버튼처럼 보이도록 버튼 스타일/텍스트 변경 (옵션)
             setTimeout(() => {
                 calculateBtn.textContent = '조건 변경하고 다시 계산';
                 calculateBtn.classList.replace('py-4', 'py-3');
                 calculateBtn.classList.replace('text-lg', 'text-sm');
-                calculateBtn.classList.replace('bg-blue-600', 'bg-white');
-                calculateBtn.classList.replace('text-white', 'text-blue-600');
-                calculateBtn.classList.add('border', 'border-blue-200');
-                calculateBtn.classList.remove('hidden');
+                calculateBtn.style.background = 'white';
+                calculateBtn.style.color = 'var(--navy-900)';
+                calculateBtn.style.border = '1px solid var(--navy-800)';
+                calculateBtn.style.boxShadow = 'none';
             }, 100);
+
+            // 결과 영역으로 스크롤
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
+
+        // 초기화
+        updateAssetSplitDisplay();
+        updateSliderTrackGradient();
+        spouseSwitchTrack.style.backgroundColor = 'var(--navy-800)';
 
     </script>
 </body>
