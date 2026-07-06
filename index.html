@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>상속세 1분 컷 시뮬레이터</title>
+    <!-- Tailwind CSS 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* 커스텀 슬라이더 스타일링 */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #3b82f6; /* blue-500 */
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #d1d5db; /* gray-300 */
+            border-radius: 4px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-top-left-radius: 2rem;
+            border-top-right-radius: 2rem;
+            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-gray-800 flex flex-col h-screen overflow-hidden">
+
+    <!-- 헤더 -->
+    <header class="bg-blue-600 text-white p-6 shadow-md z-10 shrink-0">
+        <h1 class="text-2xl font-black tracking-tight">💸 상속세 1분 컷</h1>
+        <p class="text-blue-100 text-sm mt-1">내 자산, 세금은 얼마나 나올까?</p>
+    </header>
+
+    <!-- 메인 콘텐츠 (스크롤 가능 영역) -->
+    <main class="flex-1 overflow-y-auto p-5 pb-32">
+        
+        <!-- 입력 폼 카드 -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+            
+            <!-- 자산 입력 -->
+            <div class="mb-8">
+                <div class="flex justify-between items-end mb-2">
+                    <label class="block text-gray-700 font-bold text-lg">총 자산 규모</label>
+                    <div class="text-2xl font-black text-blue-600">
+                        <span id="assetValueDisplay">20</span><span class="text-base text-gray-500 font-medium ml-1">억원</span>
+                    </div>
+                </div>
+                <input type="range" id="assetSlider" min="10" max="200" step="10" value="20" class="w-full mt-2">
+                <div class="flex justify-between text-xs text-gray-400 mt-2">
+                    <span>10억</span>
+                    <span>100억</span>
+                    <span>200억</span>
+                </div>
+            </div>
+
+            <hr class="border-gray-100 my-6">
+
+            <!-- 가족 구성 입력 -->
+            <div>
+                <label class="block text-gray-700 font-bold text-lg mb-4">가족 구성</label>
+                
+                <!-- 배우자 여부 -->
+                <div class="flex items-center justify-between mb-4 bg-gray-50 p-4 rounded-xl">
+                    <span class="font-medium">배우자 여부</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="spouseToggle" class="sr-only peer" checked>
+                        <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-500"></div>
+                        <span class="ml-3 text-sm font-bold text-gray-700 w-8" id="spouseLabel">있음</span>
+                    </label>
+                </div>
+
+                <!-- 자녀 수 -->
+                <div class="flex items-center justify-between bg-gray-50 p-4 rounded-xl">
+                    <span class="font-medium">자녀 수</span>
+                    <div class="flex items-center space-x-4">
+                        <button id="childMinusBtn" class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm active:bg-gray-100 transition">-</button>
+                        <span id="childCountDisplay" class="font-bold text-xl w-4 text-center">2</span><span class="text-sm">명</span>
+                        <button id="childPlusBtn" class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm active:bg-gray-100 transition">+</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 text-[11px] text-gray-400 text-right">
+                * 금융자산 20% 포함, 법정지분 상속 가정
+            </div>
+        </div>
+    </main>
+
+    <!-- 하단 결과 고정 패널 -->
+    <div class="absolute bottom-0 w-full glass-panel pt-4 pb-6 px-6 z-20">
+        <div id="resultArea" class="hidden mb-4 fade-in">
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-sm text-gray-500 font-medium">예상 상속세 (납부할 세액)</span>
+                <span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">실효세율 <span id="taxRateDisplay">0.0</span>%</span>
+            </div>
+            <div class="text-3xl font-black text-gray-900 tracking-tight">
+                <span id="finalTaxDisplay">0</span><span class="text-lg text-gray-600 ml-1 font-medium">원</span>
+            </div>
+            
+            <!-- 상세 내역 토글 버튼 (선택적 구현) -->
+             <button id="detailBtn" class="mt-3 w-full py-2 text-sm text-blue-600 font-medium bg-blue-50 rounded-lg active:bg-blue-100 transition">
+                계산 내역 상세보기 ▾
+            </button>
+            
+            <!-- 상세 내역 영역 -->
+            <div id="detailArea" class="hidden mt-3 p-3 bg-gray-50 rounded-lg text-xs space-y-2 border border-gray-100">
+                <div class="flex justify-between"><span class="text-gray-500">총 상속재산</span><span class="font-medium text-gray-700" id="dt_total">0원</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">장례비용 등</span><span class="font-medium text-gray-700 text-red-500" id="dt_funeral">-15,000,000원</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">일괄공제(기본)</span><span class="font-medium text-gray-700 text-red-500" id="dt_basic">-500,000,000원</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">배우자 공제</span><span class="font-medium text-gray-700 text-red-500" id="dt_spouse">0원</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">금융재산 공제</span><span class="font-medium text-gray-700 text-red-500" id="dt_finance">0원</span></div>
+                <hr class="border-gray-200">
+                <div class="flex justify-between"><span class="text-gray-500">과세표준</span><span class="font-medium text-gray-700" id="dt_base">0원</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">적용 세율</span><span class="font-medium text-gray-700" id="dt_rate">0%</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">신고세액공제(3%)</span><span class="font-medium text-gray-700 text-red-500" id="dt_discount">0원</span></div>
+            </div>
+        </div>
+
+        <button id="calculateBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all text-lg">
+            지금 계산하기
+        </button>
+    </div>
+
+    <script>
+        // DOM 요소 가져오기
+        const assetSlider = document.getElementById('assetSlider');
+        const assetValueDisplay = document.getElementById('assetValueDisplay');
+        const spouseToggle = document.getElementById('spouseToggle');
+        const spouseLabel = document.getElementById('spouseLabel');
+        const childMinusBtn = document.getElementById('childMinusBtn');
+        const childPlusBtn = document.getElementById('childPlusBtn');
+        const childCountDisplay = document.getElementById('childCountDisplay');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resultArea = document.getElementById('resultArea');
+        const finalTaxDisplay = document.getElementById('finalTaxDisplay');
+        const taxRateDisplay = document.getElementById('taxRateDisplay');
+        const detailBtn = document.getElementById('detailBtn');
+        const detailArea = document.getElementById('detailArea');
+
+        // 상태 변수
+        let currentAssetEok = 20; // 억원
+        let hasSpouse = true;
+        let childCount = 2;
+
+        // UI 업데이트 함수들
+        assetSlider.addEventListener('input', (e) => {
+            currentAssetEok = parseInt(e.target.value);
+            assetValueDisplay.textContent = currentAssetEok;
+            resetResult();
+        });
+
+        spouseToggle.addEventListener('change', (e) => {
+            hasSpouse = e.target.checked;
+            spouseLabel.textContent = hasSpouse ? '있음' : '없음';
+            spouseLabel.className = `ml-3 text-sm font-bold w-8 ${hasSpouse ? 'text-gray-700' : 'text-gray-400'}`;
+            resetResult();
+        });
+
+        childMinusBtn.addEventListener('click', () => {
+            if (childCount > 0) {
+                childCount--;
+                childCountDisplay.textContent = childCount;
+                resetResult();
+            }
+        });
+
+        childPlusBtn.addEventListener('click', () => {
+            if (childCount < 10) { // 최대 10명 제한
+                childCount++;
+                childCountDisplay.textContent = childCount;
+                resetResult();
+            }
+        });
+
+        detailBtn.addEventListener('click', () => {
+            detailArea.classList.toggle('hidden');
+            detailBtn.textContent = detailArea.classList.contains('hidden') ? '계산 내역 상세보기 ▾' : '계산 내역 접기 ▴';
+        });
+
+        function resetResult() {
+            resultArea.classList.add('hidden');
+            calculateBtn.classList.remove('hidden');
+            detailArea.classList.add('hidden');
+            detailBtn.textContent = '계산 내역 상세보기 ▾';
+        }
+
+        // 숫자 포맷팅 (원 단위)
+        const formatWon = (number) => {
+            if (number === 0) return '0';
+            return new Intl.NumberFormat('ko-KR').format(number);
+        };
+
+        // 계산 메인 로직
+        calculateBtn.addEventListener('click', () => {
+            // 제공된 이미지 및 가정을 기반으로 한 계산 로직
+            
+            // 1. 총 상속재산가액
+            const totalAsset = currentAssetEok * 100000000;
+            
+            // 2. 장례비 (가정: 1,500만원 고정)
+            const funeralExp = 15000000;
+            
+            // 상속세 과세가액
+            const taxableValue = totalAsset - funeralExp;
+            
+            // 3. 일괄공제 (가정: 5억원 고정)
+            // 참고: 기초공제(2억)+기타인적공제 vs 일괄공제(5억) 중 큰 금액. 일반적으로 5억 적용
+            let basicDeduction = 500000000; 
+
+            // 4. 배우자 상속공제
+            // 가정: 배우자 법정지분만큼 상속. (최소 5억 ~ 최대 30억)
+            let spouseDeduction = 0;
+            if (hasSpouse) {
+                // 법정 상속 지분 비율 계산: 배우자 1.5, 자녀 1명당 1.0
+                const spouseRatio = 1.5;
+                const totalRatio = spouseRatio + (childCount * 1.0);
+                
+                // 법정 상속 금액 = (과세가액 - 상속인이 아닌수유자가받은재산(0가정)) * (배우자지분/총지분)
+                // 단순화를 위해 총 자산 기준으로 계산 (이미지와 유사한 결과 도출을 위해)
+                const legalInheritance = Math.floor(totalAsset * (spouseRatio / totalRatio));
+                
+                // 배우자 공제 한도: 30억원
+                spouseDeduction = Math.min(Math.max(legalInheritance, 500000000), 3000000000);
+            }
+
+            // 5. 금융재산 상속공제
+            // 가정: 자산의 20%가 금융자산.
+            // 2천이하: 전액, 2천~1억: 2천, 1억~10억: 20%, 10억초과: 2억 한도
+            const financeAsset = totalAsset * 0.2;
+            let financeDeduction = 0;
+            if (financeAsset <= 20000000) {
+                financeDeduction = financeAsset;
+            } else if (financeAsset <= 100000000) {
+                financeDeduction = 20000000;
+            } else {
+                financeDeduction = Math.min(financeAsset * 0.2, 200000000);
+            }
+
+            // 6. 상속세 과세표준
+            let taxBase = taxableValue - basicDeduction - spouseDeduction - financeDeduction;
+            if (taxBase < 0) taxBase = 0;
+
+            // 7. 상속세율 및 누진공제액 계산
+            let taxRate = 0;
+            let progressiveDeduction = 0;
+            
+            if (taxBase <= 100000000) { // 1억 이하
+                taxRate = 0.1;
+                progressiveDeduction = 0;
+            } else if (taxBase <= 500000000) { // 5억 이하
+                taxRate = 0.2;
+                progressiveDeduction = 10000000;
+            } else if (taxBase <= 1000000000) { // 10억 이하
+                taxRate = 0.3;
+                progressiveDeduction = 60000000;
+            } else if (taxBase <= 3000000000) { // 30억 이하
+                taxRate = 0.4;
+                progressiveDeduction = 160000000;
+            } else { // 30억 초과
+                taxRate = 0.5;
+                progressiveDeduction = 460000000;
+            }
+
+            // 8. 산출세액
+            let calculatedTax = Math.floor(taxBase * taxRate) - progressiveDeduction;
+            if (calculatedTax < 0) calculatedTax = 0;
+
+            // 9. 신고세액공제 (가정: 기한 내 자진신고 3%)
+            const reportDiscount = Math.floor(calculatedTax * 0.03);
+
+            // 10. 최종 납부할 세액
+            const finalTax = calculatedTax - reportDiscount;
+            
+            // 11. 실효세율 (실질 담세율)
+            const effectiveRate = totalAsset > 0 ? ((finalTax / totalAsset) * 100).toFixed(1) : "0.0";
+
+            // UI 업데이트
+            finalTaxDisplay.textContent = formatWon(finalTax);
+            taxRateDisplay.textContent = effectiveRate;
+            
+            // 상세내역 업데이트
+            document.getElementById('dt_total').textContent = formatWon(totalAsset) + '원';
+            document.getElementById('dt_spouse').textContent = '-' + formatWon(spouseDeduction) + '원';
+            document.getElementById('dt_finance').textContent = '-' + formatWon(financeDeduction) + '원';
+            document.getElementById('dt_base').textContent = formatWon(taxBase) + '원';
+            document.getElementById('dt_rate').textContent = (taxRate * 100) + '%';
+            document.getElementById('dt_discount').textContent = '-' + formatWon(reportDiscount) + '원';
+
+            // 애니메이션과 함께 결과 표시
+            calculateBtn.classList.add('hidden');
+            resultArea.classList.remove('hidden');
+            
+            // 다시 계산하기 버튼처럼 보이도록 버튼 스타일/텍스트 변경 (옵션)
+            setTimeout(() => {
+                calculateBtn.textContent = '조건 변경하고 다시 계산';
+                calculateBtn.classList.replace('py-4', 'py-3');
+                calculateBtn.classList.replace('text-lg', 'text-sm');
+                calculateBtn.classList.replace('bg-blue-600', 'bg-white');
+                calculateBtn.classList.replace('text-white', 'text-blue-600');
+                calculateBtn.classList.add('border', 'border-blue-200');
+                calculateBtn.classList.remove('hidden');
+            }, 100);
+        });
+
+    </script>
+</body>
+</html>
